@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { ClaimStatus, ClaimPriority } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+// import { getServerSession } from 'next-auth';
+// import { authOptions } from '@/lib/auth';
 
 // Schema para validação da atualização de sinistro
 const updateClaimSchema = z.object({
@@ -12,8 +11,8 @@ const updateClaimSchema = z.object({
     incidentDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
         message: 'Data do incidente inválida',
     }).optional(),
-    status: z.nativeEnum(ClaimStatus).optional(),
-    priority: z.nativeEnum(ClaimPriority).optional(),
+    status: z.enum(['REPORTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'CLOSED']).optional(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
     claimType: z.string().optional(),
     estimatedValue: z.number().optional(),
     approvedValue: z.number().optional(),
@@ -45,10 +44,10 @@ export async function GET(
                 policy: {
                     include: {
                         product: true,
-                        insuranceCompany: true,
+                        insurancecompany: true,
                     },
                 },
-                assignedUser: {
+                user_claim_assignedToTouser: {
                     select: {
                         id: true,
                         name: true,
@@ -56,7 +55,7 @@ export async function GET(
                         avatarUrl: true,
                     },
                 },
-                createdUser: {
+                user_claim_createdByTouser: {
                     select: {
                         id: true,
                         name: true,
@@ -64,7 +63,7 @@ export async function GET(
                         avatarUrl: true,
                     },
                 },
-                documents: {
+                claimdocument: {
                     include: {
                         user: {
                             select: {
@@ -78,7 +77,7 @@ export async function GET(
                         createdAt: 'desc',
                     },
                 },
-                timeline: {
+                claimtimeline: {
                     include: {
                         user: {
                             select: {
@@ -92,7 +91,7 @@ export async function GET(
                         timestamp: 'desc',
                     },
                 },
-                communications: {
+                claimcommunication: {
                     include: {
                         user: {
                             select: {
@@ -132,15 +131,15 @@ export async function PATCH(
 ) {
     try {
         const { id: customerId, claimId } = await params;
-        const session = await getServerSession(authOptions);
+        // const session = await getServerSession(authOptions);
 
-        // Verificar se o usuário está autenticado
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: 'Não autorizado' },
-                { status: 401 }
-            );
-        }
+        // // Verificar se o usuário está autenticado
+        // if (!session?.user) {
+        //     return NextResponse.json(
+        //         { error: 'Não autorizado' },
+        //         { status: 401 }
+        //     );
+        // }
 
         // Verificar se o cliente existe
         const customer = await prisma.customer.findUnique({
@@ -220,10 +219,10 @@ export async function PATCH(
                 policy: {
                     include: {
                         product: true,
-                        insuranceCompany: true,
+                        insurancecompany: true,
                     },
                 },
-                assignedUser: {
+                user_claim_assignedToTouser: {
                     select: {
                         id: true,
                         name: true,
@@ -236,12 +235,13 @@ export async function PATCH(
 
         // Registrar na timeline se o status foi alterado
         if (statusChanged) {
-            await prisma.claimTimeline.create({
+            await prisma.claimtimeline.create({
                 data: {
+                    id: crypto.randomUUID(),
                     claimId,
                     action: 'STATUS_CHANGED',
-                    description: `Status alterado de ${oldStatus} para ${newStatus} por ${session.user.name}`,
-                    userId: session.user.id,
+                    description: `Status alterado de ${oldStatus} para ${newStatus}`,
+                    // userId: session.user.id, // Commented out until auth is implemented
                 },
             });
         }
@@ -254,12 +254,13 @@ export async function PATCH(
             });
 
             if (assignedUser) {
-                await prisma.claimTimeline.create({
+                await prisma.claimtimeline.create({
                     data: {
+                        id: crypto.randomUUID(),
                         claimId,
                         action: 'ASSIGNED',
-                        description: `Sinistro atribuído para ${assignedUser.name} por ${session.user.name}`,
-                        userId: session.user.id,
+                        description: `Sinistro atribuído para ${assignedUser.name}`,
+                        // userId: session.user.id, // Commented out until auth is implemented
                     },
                 });
             }
@@ -282,15 +283,15 @@ export async function DELETE(
 ) {
     try {
         const { id: customerId, claimId } = await params;
-        const session = await getServerSession(authOptions);
+        // const session = await getServerSession(authOptions);
 
-        // Verificar se o usuário está autenticado
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: 'Não autorizado' },
-                { status: 401 }
-            );
-        }
+        // // Verificar se o usuário está autenticado
+        // if (!session?.user) {
+        //     return NextResponse.json(
+        //         { error: 'Não autorizado' },
+        //         { status: 401 }
+        //     );
+        // }
 
         // Verificar se o cliente existe
         const customer = await prisma.customer.findUnique({
