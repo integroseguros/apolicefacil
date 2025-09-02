@@ -1,0 +1,910 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model VeiculoFipe {
+  id                      String   @id @default(cuid())
+  cod_fipe                String   @unique(map: "VeiculoFipe_cod_fipe_key")
+  num_passageiros         Int?
+  cod_marca               String
+  marca                   String
+  cod_modelo              String
+  modelo                  String
+  cod_categoria_suhai     String
+  categoria_suhai         String
+  cod_categoria_tarifaria String?
+  valorFipe               Decimal? @db.Decimal(10, 2)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([cod_marca], map: "VeiculoFipe_cod_marca_idx")
+  @@index([cod_modelo], map: "VeiculoFipe_cod_modelo_idx")
+  @@map("veiculofipe")
+}
+
+model activity {
+  id          String   @id
+  customerId  String
+  type        String   @db.VarChar(50)
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  date        DateTime
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  customer    customer @relation(fields: [customerId], references: [id], map: "Activity_customerId_fkey")
+  user        user?    @relation(fields: [userId], references: [id], map: "Activity_userId_fkey")
+
+  @@index([customerId, date(sort: Desc)], map: "idx_customer_date")
+  @@index([date(sort: Desc)], map: "idx_date_desc")
+  @@index([type, date(sort: Desc)], map: "idx_type_date")
+  @@index([userId, date(sort: Desc)], map: "idx_user_date")
+}
+
+model address {
+  id         String   @id
+  customerId String
+  type       String?  @db.VarChar(15)
+  street     String?  @db.VarChar(100)
+  number     String?
+  complement String?
+  district   String?  @db.VarChar(100)
+  city       String?  @db.VarChar(100)
+  state      String?  @db.VarChar(2)
+  zipCode    String?  @db.VarChar(8)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  customer   customer @relation(fields: [customerId], references: [id], map: "Address_customerId_fkey")
+
+  @@index([customerId], map: "Address_customerId_fkey")
+}
+
+model branch {
+  id        String    @id
+  code      String    @db.VarChar(10)
+  name      String    @db.VarChar(100)
+  status    String    @default("A")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  policy    policy[]
+  product   product[]
+}
+
+model claim {
+  id                          String               @id
+  claimNumber                 String               @unique(map: "Claim_claimNumber_key") @db.VarChar(50)
+  customerId                  String
+  policyId                    String?
+  title                       String               @db.VarChar(200)
+  description                 String               @db.Text
+  incidentDate                DateTime
+  reportedDate                DateTime             @default(now())
+  status                      claim_status         @default(REPORTED)
+  priority                    claim_priority       @default(MEDIUM)
+  claimType                   String               @db.VarChar(50)
+  estimatedValue              Decimal?             @db.Decimal(15, 2)
+  approvedValue               Decimal?             @db.Decimal(15, 2)
+  deductible                  Decimal?             @db.Decimal(15, 2)
+  location                    String?              @db.VarChar(255)
+  witnesses                   String?              @db.Text
+  policeReport                String?              @db.VarChar(100)
+  assignedTo                  String?
+  createdBy                   String?
+  closedAt                    DateTime?
+  closedReason                String?              @db.Text
+  createdAt                   DateTime             @default(now())
+  updatedAt                   DateTime
+  user_claim_assignedToTouser user?                @relation("claim_assignedToTouser", fields: [assignedTo], references: [id], map: "Claim_assignedTo_fkey")
+  user_claim_createdByTouser  user?                @relation("claim_createdByTouser", fields: [createdBy], references: [id], map: "Claim_createdBy_fkey")
+  customer                    customer             @relation(fields: [customerId], references: [id], map: "Claim_customerId_fkey")
+  policy                      policy?              @relation(fields: [policyId], references: [id], map: "Claim_policyId_fkey")
+  claimcommunication          claimcommunication[]
+  claimdocument               claimdocument[]
+  claimtimeline               claimtimeline[]
+
+  @@index([createdBy], map: "Claim_createdBy_fkey")
+  @@index([assignedTo], map: "idx_assigned_to")
+  @@index([claimNumber], map: "idx_claim_number")
+  @@index([customerId, status], map: "idx_customer_status")
+  @@index([incidentDate(sort: Desc)], map: "idx_incident_date")
+  @@index([policyId], map: "idx_policy")
+  @@index([reportedDate(sort: Desc)], map: "idx_reported_date")
+  @@index([status, priority], map: "idx_status_priority")
+}
+
+model claimcommunication {
+  id        String                       @id
+  claimId   String
+  type      claimcommunication_type
+  direction claimcommunication_direction
+  subject   String?                      @db.VarChar(255)
+  content   String                       @db.Text
+  fromEmail String?                      @db.VarChar(255)
+  toEmail   String?                      @db.VarChar(255)
+  fromPhone String?                      @db.VarChar(20)
+  toPhone   String?                      @db.VarChar(20)
+  userId    String?
+  timestamp DateTime                     @default(now())
+  claim     claim                        @relation(fields: [claimId], references: [id], onDelete: Cascade, map: "ClaimCommunication_claimId_fkey")
+  user      user?                        @relation(fields: [userId], references: [id], map: "ClaimCommunication_userId_fkey")
+
+  @@index([userId], map: "ClaimCommunication_userId_fkey")
+  @@index([claimId, timestamp(sort: Desc)], map: "idx_claim_timestamp")
+  @@index([type, timestamp(sort: Desc)], map: "idx_type_timestamp")
+}
+
+model claimdocument {
+  id           String   @id
+  claimId      String
+  name         String   @db.VarChar(255)
+  originalName String   @db.VarChar(255)
+  mimeType     String   @db.VarChar(100)
+  size         Int
+  filePath     String   @db.VarChar(500)
+  description  String?  @db.Text
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
+  claim        claim    @relation(fields: [claimId], references: [id], onDelete: Cascade, map: "ClaimDocument_claimId_fkey")
+  user         user?    @relation(fields: [uploadedBy], references: [id], map: "ClaimDocument_uploadedBy_fkey")
+
+  @@index([uploadedBy], map: "ClaimDocument_uploadedBy_fkey")
+  @@index([claimId], map: "idx_claim")
+  @@index([createdAt(sort: Desc)], map: "idx_created_desc")
+}
+
+model claimtimeline {
+  id          String   @id
+  claimId     String
+  action      String   @db.VarChar(100)
+  description String   @db.Text
+  userId      String?
+  timestamp   DateTime @default(now())
+  claim       claim    @relation(fields: [claimId], references: [id], onDelete: Cascade, map: "ClaimTimeline_claimId_fkey")
+  user        user?    @relation(fields: [userId], references: [id], map: "ClaimTimeline_userId_fkey")
+
+  @@index([userId], map: "ClaimTimeline_userId_fkey")
+  @@index([claimId, timestamp(sort: Desc)], map: "idx_claim_timestamp")
+}
+
+model commission {
+  id          String   @id
+  policyId    String
+  producerId  String
+  value       Decimal  @db.Decimal(15, 2)
+  paymentDate String   @db.VarChar(20)
+  status      String   @db.VarChar(20)
+  percentual  Decimal  @db.Decimal(5, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  policy      policy   @relation(fields: [policyId], references: [id], map: "Commission_policyId_fkey")
+  producer    producer @relation(fields: [producerId], references: [id], map: "Commission_producerId_fkey")
+
+  @@index([policyId], map: "Commission_policyId_fkey")
+  @@index([producerId], map: "Commission_producerId_fkey")
+}
+
+model condutor {
+  id              String        @id
+  nome            String        @db.VarChar(100)
+  cpf             String        @db.VarChar(14)
+  dataNascimento  DateTime?
+  parentesco      String?       @db.VarChar(50)
+  genero          String?       @db.VarChar(20)
+  estadoCivil     String?       @db.VarChar(30)
+  profissao       String?       @db.VarChar(100)
+  itemAutomovelId String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  itemautomovel   itemautomovel @relation(fields: [itemAutomovelId], references: [id], onDelete: Cascade, map: "Condutor_itemAutomovelId_fkey")
+
+  @@index([itemAutomovelId], map: "Condutor_itemAutomovelId_idx")
+}
+
+model contact {
+  id         String   @id
+  customerId String
+  type       String?  @db.VarChar(10)
+  name       String   @db.VarChar(100)
+  birthDate  String?  @db.VarChar(10)
+  gender     String?  @db.VarChar(10)
+  email      String?  @unique(map: "Contact_email_key")
+  phone      String?  @db.VarChar(15)
+  cellPhone  String?  @db.VarChar(15)
+  position   String?  @db.VarChar(100)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  customer   customer @relation(fields: [customerId], references: [id], map: "Contact_customerId_fkey")
+
+  @@index([customerId], map: "Contact_customerId_fkey")
+}
+
+model customer {
+  id                     String                 @id
+  name                   String                 @db.VarChar(100)
+  status                 String?                @default("1")
+  socialName             String?                @db.VarChar(100)
+  birthDate              String?                @db.VarChar(10)
+  gender                 String?                @db.VarChar(10)
+  personType             String?                @db.VarChar(8)
+  cnpjCpf                String?                @unique(map: "Customer_cnpjCpf_key")
+  email                  String?                @unique(map: "Customer_email_key")
+  website                String?                @db.VarChar(100)
+  clientSince            String?                @db.VarChar(7)
+  revenue                String?                @db.VarChar(10)
+  business               String?                @db.VarChar(100)
+  avatarUrl              String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime
+  cnhExpiration          String?                @db.VarChar(20)
+  cnhNumber              String?                @db.VarChar(20)
+  documentDateExpedition String?                @db.VarChar(10)
+  documentIssuingAgency  String?                @db.VarChar(10)
+  income                 String?                @db.VarChar(10)
+  maritalStatus          String?                @db.VarChar(10)
+  source                 String?                @db.VarChar(100)
+  activity               activity[]
+  address                address[]
+  claim                  claim[]
+  contact                contact[]
+  document               document[]
+  opportunity            opportunity[]
+  phone                  phone[]
+  policy                 policy[]
+  producer               producer[]
+  whatsappconversation   whatsappconversation[]
+  whatsappmessage        whatsappmessage[]
+}
+
+model document {
+  id             String            @id
+  customerId     String
+  name           String            @db.VarChar(255)
+  originalName   String            @db.VarChar(255)
+  category       document_category
+  mimeType       String            @db.VarChar(100)
+  size           Int
+  filePath       String            @db.VarChar(500)
+  description    String?           @db.Text
+  version        Int               @default(1)
+  parentId       String?
+  uploadedBy     String?
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime
+  customer       customer          @relation(fields: [customerId], references: [id], onDelete: Cascade, map: "Document_customerId_fkey")
+  document       document?         @relation("documentTodocument", fields: [parentId], references: [id], map: "Document_parentId_fkey")
+  other_document document[]        @relation("documentTodocument")
+  user           user?             @relation(fields: [uploadedBy], references: [id], map: "Document_uploadedBy_fkey")
+
+  @@index([uploadedBy], map: "Document_uploadedBy_fkey")
+  @@index([createdAt(sort: Desc)], map: "idx_created_desc")
+  @@index([customerId, isActive], map: "idx_customer_active")
+  @@index([customerId, category], map: "idx_customer_category")
+  @@index([parentId], map: "idx_parent")
+}
+
+model endosso {
+  id            String    @id
+  apoliceId     String
+  sequencia     Int
+  endossoNr     String    @db.VarChar(50)
+  vigencia      String    @db.VarChar(100)
+  tipoMovimento String    @db.VarChar(100)
+  nrVidas       String    @db.VarChar(30)
+  premio        Decimal   @db.Decimal(15, 2)
+  sitMov        String    @db.VarChar(50)
+  observacoes   String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  dataEmissao   DateTime?
+  numeroApolice String?   @db.VarChar(50)
+  policy        policy    @relation(fields: [apoliceId], references: [id], onDelete: Cascade, map: "Endosso_apoliceId_fkey")
+
+  @@unique([apoliceId, sequencia], map: "Endosso_apoliceId_sequencia_key")
+  @@index([apoliceId, sequencia], map: "idx_apolice_sequencia")
+  @@index([apoliceId], map: "idx_endosso_apolice")
+  @@index([sequencia], map: "idx_endosso_sequencia")
+  @@index([numeroApolice], map: "idx_numero_apolice")
+}
+
+model insurancecompany {
+  id            String    @id
+  name          String    @db.VarChar(100)
+  status        String    @default("A")
+  phone         String?   @db.VarChar(15)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  susep         String?   @db.VarChar(5)
+  urlLogo       String?   @db.VarChar(255)
+  obsersvations String?   @db.VarChar(255)
+  policy        policy[]
+  product       product[]
+}
+
+model itemautomovel {
+  id                    String     @id
+  plate                 String?    @db.VarChar(10)
+  chassi                String?    @db.VarChar(17)
+  model                 String     @db.VarChar(100)
+  manufacturerYear      Int?
+  manufacturerYearModel Int?
+  zeroKm                String?    @db.VarChar(1)
+  bonus                 Decimal?
+  identificationCode    String?    @db.VarChar(10)
+  fipe                  String?    @db.VarChar(10)
+  fuel                  String?    @db.VarChar(10)
+  policyId              String?    @unique(map: "ItemAutomovel_policyId_key")
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime
+  item                  Int?
+  itemCia               String?    @db.VarChar(5)
+  itemStatus            String?    @db.VarChar(20)
+  manufacturer          String     @db.VarChar(100)
+  observation           String?    @db.VarChar(255)
+  owner                 String?    @db.VarChar(100)
+  coverage              String?    @db.VarChar(10)
+  condutor              condutor[]
+  policy                policy?    @relation(fields: [policyId], references: [id], map: "ItemAutomovel_policyId_fkey")
+}
+
+model opportunity {
+  id         String   @id
+  name       String   @db.VarChar(100)
+  customerId String
+  stage      String
+  value      Float
+  policyId   String?
+  productId  String?
+  userId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  customer   customer @relation(fields: [customerId], references: [id], map: "Opportunity_customerId_fkey")
+  policy     policy?  @relation(fields: [policyId], references: [id], map: "Opportunity_policyId_fkey")
+  product    product? @relation(fields: [productId], references: [id], map: "Opportunity_productId_fkey")
+  user       user?    @relation(fields: [userId], references: [id], map: "Opportunity_userId_fkey")
+
+  @@index([customerId], map: "Opportunity_customerId_fkey")
+  @@index([policyId], map: "Opportunity_policyId_fkey")
+  @@index([productId], map: "Opportunity_productId_fkey")
+  @@index([userId], map: "Opportunity_userId_fkey")
+}
+
+model phone {
+  id         String   @id
+  customerId String
+  type       String   @db.VarChar(10)
+  number     String
+  contact    String?  @db.VarChar(50)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+  customer   customer @relation(fields: [customerId], references: [id], map: "Phone_customerId_fkey")
+
+  @@index([customerId], map: "Phone_customerId_fkey")
+}
+
+model policy {
+  id                       String           @id
+  document                 String           @db.VarChar(10)
+  proposalNumber           String           @db.VarChar(30)
+  situationDocument        String           @default("1")
+  policyNumber             String?          @unique(map: "Policy_policyNumber_key")
+  issueDate                DateTime?
+  renewal                  String           @default("1")
+  tipoRenewal              String           @db.VarChar(2)
+  previousPolicy           String?          @db.VarChar(30)
+  previousInsuranceCompany String?          @db.VarChar(30)
+  source                   String?          @db.VarChar(20)
+  liquidPrize              Decimal?         @db.Decimal(15, 2)
+  totalPrize               Decimal?         @db.Decimal(15, 2)
+  iof                      Decimal?         @db.Decimal(15, 2)
+  commissionValue          Decimal?         @db.Decimal(15, 2)
+  customerId               String
+  insuranceCompanyId       String
+  branchId                 String
+  productId                String
+  userId                   String?
+  producerId               String?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime
+  bonus                    String?          @db.VarChar(2)
+  endDate                  DateTime
+  identificationCode       String?          @db.VarChar(30)
+  startDate                DateTime
+  detailsStatus            String           @default("pending")
+  emissaoData              Json?
+  formaPagamento           String?
+  percentualComissao       Decimal?         @db.Decimal(5, 2)
+  valoresData              Json?
+  valoresStatus            String           @default("pending")
+  agencia                  String?
+  alteradoPor              String?
+  apoliceColetiva          Boolean?         @default(false)
+  banco                    String?
+  contaCorrente            String?
+  criadoPor                String?
+  nrVidas                  String?          @db.VarChar(30)
+  additional               Decimal?         @db.Decimal(15, 2)
+  cost                     Decimal?         @db.Decimal(15, 2)
+  discountFee              Boolean?         @default(false)
+  firstDueDate             DateTime?
+  installmentValue         Decimal?         @db.Decimal(15, 2)
+  numberInstallments       Int?
+  upcomingDueDate          DateTime?
+  claim                    claim[]
+  commission               commission[]
+  endosso                  endosso[]
+  itemautomovel            itemautomovel?
+  opportunity              opportunity[]
+  branch                   branch           @relation(fields: [branchId], references: [id], map: "Policy_branchId_fkey")
+  customer                 customer         @relation(fields: [customerId], references: [id], map: "Policy_customerId_fkey")
+  insurancecompany         insurancecompany @relation(fields: [insuranceCompanyId], references: [id], map: "Policy_insuranceCompanyId_fkey")
+  producer                 producer?        @relation(fields: [producerId], references: [id], map: "Policy_producerId_fkey")
+  product                  product          @relation(fields: [productId], references: [id], map: "Policy_productId_fkey")
+  user                     user?            @relation(fields: [userId], references: [id], map: "Policy_userId_fkey")
+
+  @@index([branchId], map: "Policy_branchId_fkey")
+  @@index([insuranceCompanyId], map: "Policy_insuranceCompanyId_fkey")
+  @@index([producerId], map: "Policy_producerId_fkey")
+  @@index([productId], map: "Policy_productId_fkey")
+  @@index([userId], map: "Policy_userId_fkey")
+  @@index([customerId, detailsStatus], map: "idx_customer_details_status")
+  @@index([customerId, situationDocument, detailsStatus], map: "idx_customer_situation_details")
+  @@index([detailsStatus, situationDocument, updatedAt(sort: Desc)], map: "idx_details_situation_updated")
+  @@index([detailsStatus, createdAt(sort: Desc)], map: "idx_details_status_created")
+  @@index([situationDocument, createdAt(sort: Desc)], map: "idx_situation_created")
+  @@index([situationDocument, detailsStatus], map: "idx_situation_details_status")
+}
+
+model producer {
+  id          String       @id
+  name        String       @db.VarChar(100)
+  status      String       @default("1")
+  role        String       @default("Produtor")
+  email       String?      @unique(map: "Producer_email_key")
+  phone       String?      @unique(map: "Producer_phone_key")
+  bank        String?      @db.VarChar(100)
+  bankAgency  String?      @db.VarChar(10)
+  bankAccount String?      @db.VarChar(10)
+  avatarUrl   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  customerId  String?
+  commission  commission[]
+  policy      policy[]
+  customer    customer?    @relation(fields: [customerId], references: [id], map: "Producer_customerId_fkey")
+
+  @@index([customerId], map: "Producer_customerId_fkey")
+}
+
+model product {
+  id                    String           @id
+  code                  String?          @db.VarChar(10)
+  name                  String?          @db.VarChar(100)
+  status                String           @default("A")
+  branchId              String
+  insuranceCompanyId    String
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime
+  additionalCommission  Boolean          @default(false)
+  iof                   Decimal?         @db.Decimal(15, 2)
+  showBudget            Boolean          @default(true)
+  subscriptionInsurance Boolean?         @default(false)
+  opportunity           opportunity[]
+  policy                policy[]
+  branch                branch           @relation(fields: [branchId], references: [id], map: "Product_branchId_fkey")
+  insurancecompany      insurancecompany @relation(fields: [insuranceCompanyId], references: [id], map: "Product_insuranceCompanyId_fkey")
+
+  @@index([branchId], map: "Product_branchId_fkey")
+  @@index([insuranceCompanyId], map: "Product_insuranceCompanyId_fkey")
+}
+
+model role {
+  id        String   @id
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  user      user[]
+}
+
+model user {
+  id                           String               @id
+  name                         String               @db.VarChar(100)
+  status                       String               @default("1")
+  password                     String               @db.VarChar(255)
+  email                        String?              @unique(map: "User_email_key")
+  phone                        String?              @unique(map: "User_phone_key")
+  avatarUrl                    String?
+  role                         String               @default("Atendente")
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime
+  roleId                       String?
+  activity                     activity[]
+  claim_claim_assignedToTouser claim[]              @relation("claim_assignedToTouser")
+  claim_claim_createdByTouser  claim[]              @relation("claim_createdByTouser")
+  claimcommunication           claimcommunication[]
+  claimdocument                claimdocument[]
+  claimtimeline                claimtimeline[]
+  document                     document[]
+  opportunity                  opportunity[]
+  policy                       policy[]
+  roleRelation                 role?                @relation(fields: [roleId], references: [id], map: "User_roleId_fkey")
+
+  @@index([roleId], map: "User_roleId_fkey")
+}
+
+model whatsappconfig {
+  id                       String                     @id
+  baseUrl                  String                     @db.VarChar(255)
+  apiKey                   String                     @db.Text
+  instanceName             String                     @db.VarChar(100)
+  isActive                 Boolean                    @default(false)
+  lastTested               DateTime?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime
+  lastWebhookTest          DateTime?
+  webhookActive            Boolean                    @default(false)
+  webhookToken             String?                    @db.Text
+  webhookUrl               String?                    @db.VarChar(500)
+  whatsappconnectionstatus whatsappconnectionstatus[]
+  whatsappqrcode           whatsappqrcode[]
+  whatsappqrcodehistory    whatsappqrcodehistory[]
+  whatsappwebhooklog       whatsappwebhooklog[]
+
+  @@index([instanceName], map: "WhatsAppConfig_instanceName_idx")
+  @@index([webhookActive], map: "WhatsAppConfig_webhookActive_idx")
+}
+
+model whatsappconnectionanalytics {
+  id                    String   @id
+  instanceName          String   @db.VarChar(100)
+  date                  DateTime @db.Date
+  qrCodesGenerated      Int      @default(0)
+  qrCodesExpired        Int      @default(0)
+  qrCodesUsed           Int      @default(0)
+  connectionsSuccessful Int      @default(0)
+  connectionsFailed     Int      @default(0)
+  averageConnectionTime Int?
+  totalAccessCount      Int      @default(0)
+  uniqueAccessCount     Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
+
+  @@unique([instanceName, date], map: "WhatsAppConnectionAnalytics_instanceName_date_key")
+  @@index([date(sort: Desc)], map: "idx_analytics_date")
+  @@index([instanceName], map: "idx_analytics_instance")
+  @@index([instanceName, date(sort: Desc)], map: "idx_instance_analytics_date")
+}
+
+model whatsappconnectionstatus {
+  id                String                          @id
+  configId          String
+  instanceName      String                          @unique(map: "WhatsAppConnectionStatus_instanceName_key") @db.VarChar(100)
+  status            whatsappconnectionstatus_status @default(DISCONNECTED)
+  lastStatusCheck   DateTime                        @default(now())
+  connectionDetails Json?
+  errorMessage      String?                         @db.Text
+  createdAt         DateTime                        @default(now())
+  updatedAt         DateTime
+  whatsappconfig    whatsappconfig                  @relation(fields: [configId], references: [id], onDelete: Cascade, map: "WhatsAppConnectionStatus_configId_fkey")
+
+  @@index([configId], map: "WhatsAppConnectionStatus_configId_idx")
+  @@index([instanceName], map: "idx_instance_name")
+  @@index([lastStatusCheck], map: "idx_last_check")
+  @@index([status], map: "idx_status")
+}
+
+model whatsappconversation {
+  id              String            @id
+  phoneNumber     String            @unique(map: "WhatsAppConversation_phoneNumber_key") @db.VarChar(20)
+  customerName    String?           @db.VarChar(100)
+  customerId      String?
+  lastMessage     DateTime?
+  unreadCount     Int               @default(0)
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  customer        customer?         @relation(fields: [customerId], references: [id], map: "WhatsAppConversation_customerId_fkey")
+  whatsappmessage whatsappmessage[]
+
+  @@index([customerId], map: "WhatsAppConversation_customerId_idx")
+  @@index([phoneNumber], map: "WhatsAppConversation_phoneNumber_idx")
+  @@index([isActive, lastMessage(sort: Desc)], map: "idx_active_lastmessage")
+  @@index([isActive, unreadCount(sort: Desc), lastMessage(sort: Desc)], map: "idx_active_unread_lastmessage")
+  @@index([customerId, isActive], map: "idx_customer_active")
+  @@index([customerName], map: "idx_customer_name")
+  @@index([lastMessage(sort: Desc), createdAt(sort: Desc)], map: "idx_lastmessage_created")
+}
+
+model whatsappmessage {
+  id                   String                      @id
+  conversationId       String
+  messageId            String                      @unique(map: "WhatsAppMessage_messageId_key") @db.VarChar(100)
+  fromNumber           String                      @db.VarChar(20)
+  toNumber             String                      @db.VarChar(20)
+  content              String                      @db.Text
+  messageType          whatsappmessage_messageType @default(TEXT)
+  direction            whatsappmessage_direction
+  status               whatsappmessage_status      @default(SENT)
+  timestamp            DateTime
+  customerId           String?
+  createdAt            DateTime                    @default(now())
+  whatsappconversation whatsappconversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade, map: "WhatsAppMessage_conversationId_fkey")
+  customer             customer?                   @relation(fields: [customerId], references: [id], map: "WhatsAppMessage_customerId_fkey")
+
+  @@index([conversationId], map: "WhatsAppMessage_conversationId_idx")
+  @@index([messageId], map: "WhatsAppMessage_messageId_idx")
+  @@index([conversationId, direction, timestamp(sort: Desc)], map: "idx_conversation_direction_timestamp")
+  @@index([conversationId, timestamp(sort: Desc)], map: "idx_conversation_timestamp")
+  @@index([createdAt(sort: Desc)], map: "idx_created_desc")
+  @@index([customerId, timestamp(sort: Desc)], map: "idx_customer_timestamp")
+  @@index([fromNumber, timestamp(sort: Desc)], map: "idx_from_timestamp")
+  @@index([status, createdAt], map: "idx_status_created")
+  @@index([timestamp(sort: Desc), id], map: "idx_timestamp_id_cursor")
+  @@index([messageType, timestamp(sort: Desc)], map: "idx_type_timestamp")
+}
+
+model whatsappqrcode {
+  id             String                @id
+  configId       String
+  instanceName   String                @unique(map: "WhatsAppQRCode_instanceName_key") @db.VarChar(100)
+  qrCode         String                @db.Text
+  qrCodeBase64   String                @db.LongText
+  status         whatsappqrcode_status @default(ACTIVE)
+  expiresAt      DateTime
+  connectedAt    DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime
+  whatsappconfig whatsappconfig        @relation(fields: [configId], references: [id], onDelete: Cascade, map: "WhatsAppQRCode_configId_fkey")
+
+  @@index([configId], map: "WhatsAppQRCode_configId_idx")
+  @@index([expiresAt], map: "idx_expires_at")
+  @@index([instanceName, status], map: "idx_instance_status")
+  @@index([status, createdAt], map: "idx_status_created")
+}
+
+model whatsappqrcodeaccess {
+  id           String   @id
+  instanceName String   @db.VarChar(100)
+  qrCodeId     String?
+  accessType   String   @db.VarChar(50)
+  userAgent    String?  @db.VarChar(500)
+  ipAddress    String?  @db.VarChar(45)
+  sessionId    String?  @db.VarChar(100)
+  userId       String?
+  success      Boolean  @default(true)
+  errorMessage String?  @db.Text
+  timestamp    DateTime @default(now())
+
+  @@index([instanceName], map: "idx_access_instance")
+  @@index([success], map: "idx_access_success")
+  @@index([timestamp(sort: Desc)], map: "idx_access_timestamp")
+  @@index([accessType], map: "idx_access_type")
+  @@index([instanceName, timestamp(sort: Desc)], map: "idx_instance_access_timestamp")
+  @@index([userId, timestamp(sort: Desc)], map: "idx_user_access_timestamp")
+}
+
+model whatsappqrcodecleanuplog {
+  id              String   @id
+  expiredCount    Int      @default(0)
+  cleanedCount    Int      @default(0)
+  cleanedWarnings Int      @default(0)
+  timestamp       DateTime @default(now())
+
+  @@index([timestamp], map: "idx_cleanup_timestamp")
+}
+
+model whatsappqrcodeexpiration {
+  id              String   @id
+  instanceName    String   @db.VarChar(100)
+  expiredAt       DateTime
+  autoRegenerated Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([autoRegenerated], map: "idx_auto_regenerated")
+  @@index([expiredAt], map: "idx_expiration_date")
+  @@index([instanceName], map: "idx_expiration_instance")
+}
+
+model whatsappqrcodehistory {
+  id             String                        @id
+  configId       String
+  instanceName   String                        @db.VarChar(100)
+  qrCodeId       String?
+  action         whatsappqrcodehistory_action
+  status         whatsappqrcodehistory_status?
+  details        Json?
+  userAgent      String?                       @db.VarChar(500)
+  ipAddress      String?                       @db.VarChar(45)
+  sessionId      String?                       @db.VarChar(100)
+  userId         String?
+  timestamp      DateTime                      @default(now())
+  whatsappconfig whatsappconfig                @relation(fields: [configId], references: [id], onDelete: Cascade, map: "WhatsAppQRCodeHistory_configId_fkey")
+
+  @@index([action, timestamp(sort: Desc)], map: "idx_action_timestamp")
+  @@index([action], map: "idx_history_action")
+  @@index([configId], map: "idx_history_config")
+  @@index([instanceName], map: "idx_history_instance")
+  @@index([timestamp(sort: Desc)], map: "idx_history_timestamp")
+  @@index([instanceName, timestamp(sort: Desc)], map: "idx_instance_timestamp")
+  @@index([userId, timestamp(sort: Desc)], map: "idx_user_timestamp")
+}
+
+model whatsappqrcoderetention {
+  id                String    @id
+  instanceName      String    @unique(map: "WhatsAppQRCodeRetention_instanceName_key") @db.VarChar(100)
+  retentionDays     Int       @default(30)
+  lastCleanupAt     DateTime?
+  historyRecords    Int       @default(0)
+  accessRecords     Int       @default(0)
+  analyticsRecords  Int       @default(0)
+  autoCleanupActive Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime
+
+  @@index([autoCleanupActive], map: "idx_retention_active")
+  @@index([lastCleanupAt], map: "idx_retention_cleanup")
+}
+
+model whatsappqrcodewarning {
+  id            String   @id
+  instanceName  String   @db.VarChar(100)
+  warningType   String   @db.VarChar(50)
+  timeRemaining Int
+  timestamp     DateTime @default(now())
+
+  @@index([instanceName], map: "idx_warning_instance")
+  @@index([timestamp], map: "idx_warning_timestamp")
+  @@index([warningType], map: "idx_warning_type")
+}
+
+model whatsappsystemerror {
+  id           String    @id
+  timestamp    DateTime  @default(now())
+  errorType    String    @db.VarChar(50)
+  errorCode    String?   @db.VarChar(20)
+  message      String    @db.Text
+  stackTrace   String?   @db.Text
+  endpoint     String?   @db.VarChar(255)
+  instanceName String?   @db.VarChar(100)
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime?
+
+  @@index([errorType], map: "WhatsAppSystemError_errorType_idx")
+  @@index([resolved], map: "WhatsAppSystemError_resolved_idx")
+  @@index([timestamp], map: "WhatsAppSystemError_timestamp_idx")
+}
+
+model whatsappsystemmetrics {
+  id                  String   @id
+  timestamp           DateTime @default(now())
+  connectionStatus    String   @db.VarChar(20)
+  messagesProcessed   Int      @default(0)
+  messagesSent        Int      @default(0)
+  messagesReceived    Int      @default(0)
+  messagesFailed      Int      @default(0)
+  averageResponseTime Float?
+  apiResponseTime     Float?
+  errorCount          Int      @default(0)
+  activeConversations Int      @default(0)
+
+  @@index([timestamp], map: "WhatsAppSystemMetrics_timestamp_idx")
+}
+
+model whatsappwebhooklog {
+  id             String         @id
+  configId       String
+  event          String         @db.VarChar(50)
+  instanceName   String         @db.VarChar(100)
+  success        Boolean
+  error          String?        @db.Text
+  requestData    Json?
+  responseData   Json?
+  clientIp       String?        @db.VarChar(45)
+  timestamp      DateTime       @default(now())
+  whatsappconfig whatsappconfig @relation(fields: [configId], references: [id], onDelete: Cascade, map: "WhatsAppWebhookLog_configId_fkey")
+
+  @@index([configId], map: "WhatsAppWebhookLog_configId_idx")
+  @@index([event], map: "WhatsAppWebhookLog_event_idx")
+  @@index([instanceName], map: "WhatsAppWebhookLog_instanceName_idx")
+  @@index([success], map: "WhatsAppWebhookLog_success_idx")
+  @@index([timestamp], map: "WhatsAppWebhookLog_timestamp_idx")
+}
+
+enum claimcommunication_type {
+  EMAIL
+  PHONE
+  SMS
+  WHATSAPP
+  INTERNAL_NOTE
+}
+
+enum claimcommunication_direction {
+  INBOUND
+  OUTBOUND
+}
+
+enum whatsappconnectionstatus_status {
+  DISCONNECTED
+  CONNECTING
+  CONNECTED
+  ERROR
+}
+
+enum document_category {
+  IDENTIFICATION
+  CONTRACT
+  POLICY
+  PROPOSAL
+  PHOTO
+  FINANCIAL
+  LEGAL
+  OTHER
+}
+
+enum whatsappqrcodehistory_action {
+  GENERATED
+  VIEWED
+  DOWNLOADED
+  EXPIRED
+  USED
+  REGENERATED
+  DELETED
+  ACCESSED
+  FAILED
+}
+
+enum whatsappqrcode_status {
+  ACTIVE
+  EXPIRED
+  USED
+}
+
+enum whatsappqrcodehistory_status {
+  ACTIVE
+  EXPIRED
+  USED
+}
+
+enum whatsappmessage_messageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  LOCATION
+}
+
+enum whatsappmessage_direction {
+  INBOUND
+  OUTBOUND
+}
+
+enum claim_status {
+  REPORTED
+  UNDER_REVIEW
+  INVESTIGATING
+  APPROVED
+  REJECTED
+  SETTLED
+  CLOSED
+}
+
+enum whatsappmessage_status {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum claim_priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
