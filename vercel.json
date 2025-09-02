@@ -1,0 +1,22 @@
+{
+    "buildCommand": "prisma generate && next build",
+    "outputDirectory": ".next",
+    "framework": "nextjs",
+    "installCommand": "npm install",
+    "devCommand": "npm run dev:next",
+    "functions": {
+        "src/app/api/**/*.ts": {
+            "maxDuration": 30
+        }
+    },
+    "env": {
+        "NODE_ENV": "production",
+        "NEXT_TELEMETRY_DISABLED": "1"
+    },
+    "build": {
+        "env": {
+            "NEXT_TELEMETRY_DISABLED": "1",
+            "NODE_OPTIONS": "--max-old-space-size=4096"
+        }
+    }
+}
