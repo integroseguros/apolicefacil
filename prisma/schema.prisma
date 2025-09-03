@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model VeiculoFipe {
@@ -62,7 +63,7 @@ model address {
   updatedAt  DateTime @default(now())
   customer   customer @relation(fields: [customerId], references: [id], map: "Address_customerId_fkey")
 
-  @@index([customerId], map: "Address_customerId_fkey")
+  @@index([customerId], map: "Address_customerId_idx")
 }
 
 model branch {
@@ -108,7 +109,7 @@ model claim {
   claimdocument               claimdocument[]
   claimtimeline               claimtimeline[]
 
-  @@index([createdBy], map: "Claim_createdBy_fkey")
+  @@index([createdBy], map: "Claim_createdBy_idx")
   @@index([assignedTo], map: "idx_assigned_to")
   @@index([claimNumber], map: "idx_claim_number")
   @@index([customerId, status], map: "idx_customer_status")
@@ -134,9 +135,9 @@ model claimcommunication {
   claim     claim                        @relation(fields: [claimId], references: [id], onDelete: Cascade, map: "ClaimCommunication_claimId_fkey")
   user      user?                        @relation(fields: [userId], references: [id], map: "ClaimCommunication_userId_fkey")
 
-  @@index([userId], map: "ClaimCommunication_userId_fkey")
-  @@index([claimId, timestamp(sort: Desc)], map: "idx_claim_timestamp")
-  @@index([type, timestamp(sort: Desc)], map: "idx_type_timestamp")
+  @@index([userId], map: "ClaimCommunication_userId_idx")
+  @@index([claimId, timestamp(sort: Desc)], map: "idx_comm_claim_timestamp")
+  @@index([type, timestamp(sort: Desc)], map: "idx_comm_type_timestamp")
 }
 
 model claimdocument {
@@ -153,9 +154,9 @@ model claimdocument {
   claim        claim    @relation(fields: [claimId], references: [id], onDelete: Cascade, map: "ClaimDocument_claimId_fkey")
   user         user?    @relation(fields: [uploadedBy], references: [id], map: "ClaimDocument_uploadedBy_fkey")
 
-  @@index([uploadedBy], map: "ClaimDocument_uploadedBy_fkey")
+  @@index([uploadedBy], map: "ClaimDocument_uploadedBy_idx")
   @@index([claimId], map: "idx_claim")
-  @@index([createdAt(sort: Desc)], map: "idx_created_desc")
+  @@index([createdAt(sort: Desc)], map: "idx_claimdoc_created_desc")
 }
 
 model claimtimeline {
@@ -168,8 +169,8 @@ model claimtimeline {
   claim       claim    @relation(fields: [claimId], references: [id], onDelete: Cascade, map: "ClaimTimeline_claimId_fkey")
   user        user?    @relation(fields: [userId], references: [id], map: "ClaimTimeline_userId_fkey")
 
-  @@index([userId], map: "ClaimTimeline_userId_fkey")
-  @@index([claimId, timestamp(sort: Desc)], map: "idx_claim_timestamp")
+  @@index([userId], map: "ClaimTimeline_userId_idx")
+  @@index([claimId, timestamp(sort: Desc)], map: "idx_timeline_claim_timestamp")
 }
 
 model commission {
@@ -185,8 +186,8 @@ model commission {
   policy      policy   @relation(fields: [policyId], references: [id], map: "Commission_policyId_fkey")
   producer    producer @relation(fields: [producerId], references: [id], map: "Commission_producerId_fkey")
 
-  @@index([policyId], map: "Commission_policyId_fkey")
-  @@index([producerId], map: "Commission_producerId_fkey")
+  @@index([policyId], map: "Commission_policyId_idx")
+  @@index([producerId], map: "Commission_producerId_idx")
 }
 
 model condutor {
@@ -221,7 +222,7 @@ model contact {
   updatedAt  DateTime @default(now())
   customer   customer @relation(fields: [customerId], references: [id], map: "Contact_customerId_fkey")
 
-  @@index([customerId], map: "Contact_customerId_fkey")
+  @@index([customerId], map: "Contact_customerId_idx")
 }
 
 model customer {
@@ -282,9 +283,9 @@ model document {
   other_document document[]        @relation("documentTodocument")
   user           user?             @relation(fields: [uploadedBy], references: [id], map: "Document_uploadedBy_fkey")
 
-  @@index([uploadedBy], map: "Document_uploadedBy_fkey")
-  @@index([createdAt(sort: Desc)], map: "idx_created_desc")
-  @@index([customerId, isActive], map: "idx_customer_active")
+  @@index([uploadedBy], map: "Document_uploadedBy_idx")
+  @@index([createdAt(sort: Desc)], map: "idx_doc_created_desc")
+  @@index([customerId, isActive], map: "idx_doc_customer_active")
   @@index([customerId, category], map: "idx_customer_category")
   @@index([parentId], map: "idx_parent")
 }
@@ -369,10 +370,10 @@ model opportunity {
   product    product? @relation(fields: [productId], references: [id], map: "Opportunity_productId_fkey")
   user       user?    @relation(fields: [userId], references: [id], map: "Opportunity_userId_fkey")
 
-  @@index([customerId], map: "Opportunity_customerId_fkey")
-  @@index([policyId], map: "Opportunity_policyId_fkey")
-  @@index([productId], map: "Opportunity_productId_fkey")
-  @@index([userId], map: "Opportunity_userId_fkey")
+  @@index([customerId], map: "Opportunity_customerId_idx")
+  @@index([policyId], map: "Opportunity_policyId_idx")
+  @@index([productId], map: "Opportunity_productId_idx")
+  @@index([userId], map: "Opportunity_userId_idx")
 }
 
 model phone {
@@ -385,7 +386,7 @@ model phone {
   updatedAt  DateTime @default(now())
   customer   customer @relation(fields: [customerId], references: [id], map: "Phone_customerId_fkey")
 
-  @@index([customerId], map: "Phone_customerId_fkey")
+  @@index([customerId], map: "Phone_customerId_idx")
 }
 
 model policy {
@@ -448,11 +449,11 @@ model policy {
   product                  product          @relation(fields: [productId], references: [id], map: "Policy_productId_fkey")
   user                     user?            @relation(fields: [userId], references: [id], map: "Policy_userId_fkey")
 
-  @@index([branchId], map: "Policy_branchId_fkey")
-  @@index([insuranceCompanyId], map: "Policy_insuranceCompanyId_fkey")
-  @@index([producerId], map: "Policy_producerId_fkey")
-  @@index([productId], map: "Policy_productId_fkey")
-  @@index([userId], map: "Policy_userId_fkey")
+  @@index([branchId], map: "Policy_branchId_idx")
+  @@index([insuranceCompanyId], map: "Policy_insuranceCompanyId_idx")
+  @@index([producerId], map: "Policy_producerId_idx")
+  @@index([productId], map: "Policy_productId_idx")
+  @@index([userId], map: "Policy_userId_idx")
   @@index([customerId, detailsStatus], map: "idx_customer_details_status")
   @@index([customerId, situationDocument, detailsStatus], map: "idx_customer_situation_details")
   @@index([detailsStatus, situationDocument, updatedAt(sort: Desc)], map: "idx_details_situation_updated")
@@ -479,7 +480,7 @@ model producer {
   policy      policy[]
   customer    customer?    @relation(fields: [customerId], references: [id], map: "Producer_customerId_fkey")
 
-  @@index([customerId], map: "Producer_customerId_fkey")
+  @@index([customerId], map: "Producer_customerId_idx")
 }
 
 model product {
@@ -500,8 +501,8 @@ model product {
   branch                branch           @relation(fields: [branchId], references: [id], map: "Product_branchId_fkey")
   insurancecompany      insurancecompany @relation(fields: [insuranceCompanyId], references: [id], map: "Product_insuranceCompanyId_fkey")
 
-  @@index([branchId], map: "Product_branchId_fkey")
-  @@index([insuranceCompanyId], map: "Product_insuranceCompanyId_fkey")
+  @@index([branchId], map: "Product_branchId_idx")
+  @@index([insuranceCompanyId], map: "Product_insuranceCompanyId_idx")
 }
 
 model role {
@@ -535,7 +536,7 @@ model user {
   policy                       policy[]
   roleRelation                 role?                @relation(fields: [roleId], references: [id], map: "User_roleId_fkey")
 
-  @@index([roleId], map: "User_roleId_fkey")
+  @@index([roleId], map: "User_roleId_idx")
 }
 
 model whatsappconfig {
@@ -616,7 +617,7 @@ model whatsappconversation {
   @@index([phoneNumber], map: "WhatsAppConversation_phoneNumber_idx")
   @@index([isActive, lastMessage(sort: Desc)], map: "idx_active_lastmessage")
   @@index([isActive, unreadCount(sort: Desc), lastMessage(sort: Desc)], map: "idx_active_unread_lastmessage")
-  @@index([customerId, isActive], map: "idx_customer_active")
+  @@index([customerId, isActive], map: "idx_conv_customer_active")
   @@index([customerName], map: "idx_customer_name")
   @@index([lastMessage(sort: Desc), createdAt(sort: Desc)], map: "idx_lastmessage_created")
 }
@@ -641,12 +642,12 @@ model whatsappmessage {
   @@index([messageId], map: "WhatsAppMessage_messageId_idx")
   @@index([conversationId, direction, timestamp(sort: Desc)], map: "idx_conversation_direction_timestamp")
   @@index([conversationId, timestamp(sort: Desc)], map: "idx_conversation_timestamp")
-  @@index([createdAt(sort: Desc)], map: "idx_created_desc")
+  @@index([createdAt(sort: Desc)], map: "idx_msg_created_desc")
   @@index([customerId, timestamp(sort: Desc)], map: "idx_customer_timestamp")
   @@index([fromNumber, timestamp(sort: Desc)], map: "idx_from_timestamp")
-  @@index([status, createdAt], map: "idx_status_created")
+  @@index([status, createdAt], map: "idx_msg_status_created")
   @@index([timestamp(sort: Desc), id], map: "idx_timestamp_id_cursor")
-  @@index([messageType, timestamp(sort: Desc)], map: "idx_type_timestamp")
+  @@index([messageType, timestamp(sort: Desc)], map: "idx_msg_type_timestamp")
 }
 
 model whatsappqrcode {
@@ -654,7 +655,7 @@ model whatsappqrcode {
   configId       String
   instanceName   String                @unique(map: "WhatsAppQRCode_instanceName_key") @db.VarChar(100)
   qrCode         String                @db.Text
-  qrCodeBase64   String                @db.LongText
+  qrCodeBase64   String                @db.Text
   status         whatsappqrcode_status @default(ACTIVE)
   expiresAt      DateTime
   connectedAt    DateTime?
@@ -665,7 +666,7 @@ model whatsappqrcode {
   @@index([configId], map: "WhatsAppQRCode_configId_idx")
   @@index([expiresAt], map: "idx_expires_at")
   @@index([instanceName, status], map: "idx_instance_status")
-  @@index([status, createdAt], map: "idx_status_created")
+  @@index([status, createdAt], map: "idx_qr_status_created")
 }
 
 model whatsappqrcodeaccess {
