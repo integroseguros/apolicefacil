@@ -10,7 +10,7 @@ export interface Customer {
     personType: string;
     cnpjCpf: string;
     email: string;
-    phone: string;
+    phone: Phone[];
     website: string;
     clientSince: string;
     revenue: string;
@@ -19,6 +19,16 @@ export interface Customer {
     telefone: Telefone[];
     policies: Policy[];
     opportunities: Opportunity[];
+}
+
+export interface Phone {
+    id: string;
+    customerId: string;
+    type: string;
+    number: string;
+    contact?: string | null;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Telefone {

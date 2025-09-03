@@ -125,7 +125,7 @@ const ClientesPage = memo(() => {
         } finally {
             setLoading(false);
         }
-    }, [toast]);
+    }, []);
 
     useEffect(() => {
         fetchClientes();
@@ -147,7 +147,7 @@ const ClientesPage = memo(() => {
                 onClick: () => console.log("Ok"),
             },
         });
-    }, [fetchClientes, selectedCliente, toast]);
+    }, [fetchClientes, selectedCliente]);
 
     const handleFormCancel = useCallback(() => {
         setOpenFormDialog(false);
@@ -194,7 +194,7 @@ const ClientesPage = memo(() => {
             setClienteToDelete(null);
             setLoading(false);
         }
-    }, [clienteToDelete, fetchClientes, toast]);
+    }, [clienteToDelete, fetchClientes]);
 
     const handleDeleteCancel = useCallback(() => {
         setOpenConfirmDialog(false);
@@ -208,7 +208,7 @@ const ClientesPage = memo(() => {
             cliente.cnpjCpf?.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesTipo = tipoFilter === 'all' || cliente.personType === tipoFilter;
-        const matchesStatus = statusFilter === 'all' || (cliente.status === "1" && statusFilter === 'Ativo') || (cliente.status === "2" && statusFilter === 'Inativo');
+        const matchesStatus = statusFilter === 'all' || (cliente.status === "1" && statusFilter === 'ativo') || (cliente.status === "2" && statusFilter === 'inativo');
 
         return matchesSearch && matchesTipo && matchesStatus;
     });
@@ -334,7 +334,7 @@ const ClientesPage = memo(() => {
                                         )}
                                         {cliente.phone && cliente.phone.length > 0 && (
                                             <p className="flex items-center">
-                                                <Phone className="mr-2 h-4 w-4" /> {formatPhone(cliente.phone[0])}
+                                                <Phone className="mr-2 h-4 w-4" /> {formatPhone(cliente.phone[0].number)}
                                             </p>
                                         )}
                                     </CardContent>
