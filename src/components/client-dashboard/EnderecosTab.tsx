@@ -217,7 +217,7 @@ export default function EnderecosTab({ customerId }: EnderecosTabProps) {
                                             <div>
                                                 <p className="text-sm font-medium">Residenciais</p>
                                                 <p className="text-2xl font-bold">
-                                                    {addresses.filter(a =>
+                                                    {addresses.filter((a: Address) =>
                                                         a.type?.toLowerCase() === 'residencial' ||
                                                         a.type?.toLowerCase() === 'casa'
                                                     ).length}
@@ -234,7 +234,7 @@ export default function EnderecosTab({ customerId }: EnderecosTabProps) {
                                             <div>
                                                 <p className="text-sm font-medium">Comerciais</p>
                                                 <p className="text-2xl font-bold">
-                                                    {addresses.filter(a =>
+                                                    {addresses.filter((a: Address) =>
                                                         a.type?.toLowerCase() === 'comercial' ||
                                                         a.type?.toLowerCase() === 'trabalho'
                                                     ).length}
@@ -249,7 +249,7 @@ export default function EnderecosTab({ customerId }: EnderecosTabProps) {
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold">Lista de Endereços</h3>
                                 <div className="grid gap-4">
-                                    {addresses.map(address => (
+                                    {addresses.map((address: Address) => (
                                         <Card key={address.id}>
                                             <CardContent className="p-4">
                                                 <div className="flex items-start justify-between">
