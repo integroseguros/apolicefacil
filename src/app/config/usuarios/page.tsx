@@ -29,12 +29,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User } from "../../../../prisma/generated/prisma";
+import { user } from "../../../../prisma/generated/prisma";
 import { toast } from "sonner"
 import Link from "next/link";
 import { PerfisTab } from "@/components/usuarios/PerfisTab";
 
-const usuarios: User[] = [
+const usuarios: user[] = [
     {
         id: "",
         name: "",
@@ -50,7 +50,7 @@ const usuarios: User[] = [
     },
 ];
 function UserManagementTab() {
-    const [usuarios, setUsuarios] = useState<User[]>([]);
+    const [usuarios, setUsuarios] = useState<user[]>([]);
 
     // Função para buscar usuários (refresh)
     const fetchUsuarios = useCallback(async () => {

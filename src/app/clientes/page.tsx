@@ -334,7 +334,7 @@ const ClientesPage = memo(() => {
                                         )}
                                         {cliente.phone && cliente.phone.length > 0 && (
                                             <p className="flex items-center">
-                                                <Phone className="mr-2 h-4 w-4" /> {formatPhone(cliente.phone[0].number)}
+                                                <Phone className="mr-2 h-4 w-4" /> {formatPhone(cliente.phone[0])}
                                             </p>
                                         )}
                                     </CardContent>

@@ -85,6 +85,7 @@ export async function POST(
         // Criar o contato
         const contact = await prisma.contact.create({
             data: {
+                id: crypto.randomUUID(),
                 ...validatedData,
                 customerId: id,
             },
@@ -96,7 +97,7 @@ export async function POST(
 
         if (error instanceof z.ZodError) {
             return NextResponse.json(
-                { message: 'Dados inválidos', errors: error.errors },
+                { message: 'Dados inválidos', errors: error.issues },
                 { status: 400 }
             );
         }

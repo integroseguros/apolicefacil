@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanedData = {
+      id: crypto.randomUUID(),
       customerId,
       type: data.type || 'residencial',
       street: data.street,

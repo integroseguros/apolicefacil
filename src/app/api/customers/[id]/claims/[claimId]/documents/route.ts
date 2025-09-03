@@ -12,7 +12,7 @@ export async function GET(
     try {
         const { claimId } = await params;
 
-        const documents = await prisma.claimDocument.findMany({
+        const documents = await prisma.claimdocument.findMany({
             where: {
                 claimId,
             },
@@ -82,8 +82,9 @@ export async function POST(
         await writeFile(filepath, buffer);
 
         // Save document record
-        const document = await prisma.claimDocument.create({
+        const document = await prisma.claimdocument.create({
             data: {
+                id: crypto.randomUUID(),
                 claimId,
                 name: filename,
                 originalName: file.name,
@@ -104,8 +105,9 @@ export async function POST(
         });
 
         // Create timeline entry
-        await prisma.claimTimeline.create({
+        await prisma.claimtimeline.create({
             data: {
+                id: crypto.randomUUID(),
                 claimId,
                 action: 'DOCUMENT_UPLOADED',
                 description: `Documento "${file.name}" foi anexado`,

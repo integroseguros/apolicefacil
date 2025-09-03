@@ -18,7 +18,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { Pagination } from '@/components/ui/pagination';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const fetchSeguradoras = async (): Promise<InsuranceCompany[]> => {
     const response = await fetch('/api/seguradoras');
@@ -624,21 +631,43 @@ export default function ConfiguracoesProdutosPage() {
                         </Table>
                     </div>
                 </CardContent>
-                {productsResponse?.pagination && (
-                    <Pagination
-                        currentPage={productsResponse.pagination.currentPage}
-                        totalPages={productsResponse.pagination.totalPages}
-                        totalCount={productsResponse.pagination.totalCount}
-                        limit={productsResponse.pagination.limit}
-                        hasNext={productsResponse.pagination.hasNext}
-                        hasPrev={productsResponse.pagination.hasPrev}
-                        onPageChange={goToPage}
-                        onFirstPage={goToFirstPage}
-                        onLastPage={goToLastPage}
-                        onPrevPage={goToPrevPage}
-                        onNextPage={goToNextPage}
-                        isLoading={loadingProducts}
-                    />
+                {productsResponse?.pagination && productsResponse.pagination.totalPages > 1 && (
+                    <CardFooter className="flex justify-center mt-6">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() => {
+                                            if (productsResponse.pagination.hasPrev) goToPrevPage();
+                                        }}
+                                        aria-disabled={!productsResponse.pagination.hasPrev}
+                                        className={!productsResponse.pagination.hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+
+                                {[...Array(productsResponse.pagination.totalPages)].map((_, i) => (
+                                    <PaginationItem key={i} className='cursor-pointer'>
+                                        <PaginationLink
+                                            onClick={() => goToPage(i + 1)}
+                                            isActive={productsResponse.pagination.currentPage === i + 1}
+                                        >
+                                            {i + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() => {
+                                            if (productsResponse.pagination.hasNext) goToNextPage();
+                                        }}
+                                        aria-disabled={!productsResponse.pagination.hasNext}
+                                        className={!productsResponse.pagination.hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </CardFooter>
                 )}
             </Card>
         </div>

@@ -8,7 +8,7 @@ const contactSchema = z.object({
     name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome deve ter no máximo 100 caracteres'),
     birthDate: z.string().optional(),
     gender: z.enum(['MASCULINO', 'FEMININO', 'OUTRO']).optional(),
-    email: z.string().email('Email inválido').optional().or(z.literal('')),
+    email: z.email('Email inválido').optional().or(z.literal('')),
     phone: z.string().optional(),
     cellPhone: z.string().optional(),
     position: z.string().max(100, 'Cargo deve ter no máximo 100 caracteres').optional(),
@@ -105,7 +105,7 @@ export async function PUT(
 
         if (error instanceof z.ZodError) {
             return NextResponse.json(
-                { message: 'Dados inválidos', errors: error.errors },
+                { message: 'Dados inválidos', errors: error.issues },
                 { status: 400 }
             );
         }
