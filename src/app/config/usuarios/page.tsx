@@ -32,7 +32,7 @@ import {
 import { User } from "../../../../prisma/generated/prisma";
 import { toast } from "sonner"
 import Link from "next/link";
-import PerfisTab from "@/components/usuarios/PerfisTab";
+import { PerfisTab } from "@/components/usuarios/PerfisTab";
 
 const usuarios: User[] = [
     {

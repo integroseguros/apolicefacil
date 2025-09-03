@@ -11,10 +11,10 @@ const phoneSchema = z.object({
 // GET /api/customers/[id]/phones - Listar telefones do cliente
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const customerId = params.id;
+        const { id: customerId } = await params;
 
         // Verificar se o cliente existe
         const customer = await prisma.customer.findUnique({
@@ -47,10 +47,10 @@ export async function GET(
 // POST /api/customers/[id]/phones - Criar novo telefone
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const customerId = params.id;
+        const { id: customerId } = await params;
         const body = await request.json();
 
         // Validar dados

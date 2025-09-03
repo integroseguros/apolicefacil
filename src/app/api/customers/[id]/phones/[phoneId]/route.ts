@@ -11,10 +11,10 @@ const phoneSchema = z.object({
 // PUT /api/customers/[id]/phones/[phoneId] - Atualizar telefone
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string; phoneId: string } }
+    { params }: { params: Promise<{ id: string; phoneId: string }> }
 ) {
     try {
-        const { id: customerId, phoneId } = params;
+        const { id: customerId, phoneId } = await params;
         const body = await request.json();
 
         // Validar dados
@@ -85,10 +85,10 @@ export async function PUT(
 // DELETE /api/customers/[id]/phones/[phoneId] - Excluir telefone
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string; phoneId: string } }
+    { params }: { params: Promise<{ id: string; phoneId: string }> }
 ) {
     try {
-        const { id: customerId, phoneId } = params;
+        const { id: customerId, phoneId } = await params;
 
         // Verificar se o telefone existe e pertence ao cliente
         const existingPhone = await prisma.phone.findFirst({

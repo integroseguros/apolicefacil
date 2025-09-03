@@ -4,10 +4,10 @@ import { type NextRequest } from 'next/server';
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string; telefoneId: string } }
+  { params }: { params: Promise<{ id: string; telefoneId: string }> }
 ) {
   try {
-    const telefoneId = (params.telefoneId);
+    const { telefoneId } = await params;
     const data = await req.json();
 
     const telefone = await prisma.phone.update({
@@ -32,10 +32,10 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string; telefoneId: string } }
+  { params }: { params: Promise<{ id: string; telefoneId: string }> }
 ) {
   try {
-    const telefoneId = (params.telefoneId);
+    const { telefoneId } = await params;
 
     await prisma.phone.delete({
       where: { id: telefoneId }
